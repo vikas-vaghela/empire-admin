@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Empire Steps</title>
+    <style>
+        body {
+            background: #f4f6f9;
+            color: #333333;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .form-container, .products-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 25px;
+            background: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: #000000;
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #dddddd;
+            border-radius: 8px;
+            background: #ffffff;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #000000;
+        }
+
+        .upload-label {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #0066ff;
+            color: #ffffff;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .size-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 10px;
+            border: 1px solid #dddddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 13px;
+            background: #28a745;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .save-btn:hover {
+            background: #218838;
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            gap: 10px;
+        }
+
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .product-info img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .edit-btn {
+            background: #ffc107;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2 id="form-title">Add New Product</h2>
+    <form id="product-form" onsubmit="saveProductToFirebase(event)">
+        <input type="hidden" id="edit-product-id" value="">
+
+        <div class="form-group">
+            <input type="text" id="p-name" placeholder="Product Name" required>
+        </div>
+
+        <div class="form-group">
+            <input type="number" id="p-price" placeholder="Price (₹)" required>
+        </div>
+
+        <div class="form-group">
+            <label class="upload-label" for="p-images">📁 Upload Multiple Product Photos</label>
+            <input type="file" id="p-images" multiple accept="image/*" style="display: none;">
+            <p id="file-count" style="font-size: 12px; color: #666; margin: 5px 0 0 2px;"></p>
+        </div>
+
+        <div class="form-group">
+            <input type="text" id="p-discount" placeholder="Enter Discount % (e.g. 30% OFF) - Optional">
+        </div>
+
+        <div class="form-group">
+            <input type="number" id="p-orig-price" placeholder="Enter Original Price (₹) - Optional">
+        </div>
+
+        <div class="form-group">
+            <input type="text" id="p-colors" placeholder="Colors (e.g. Black, Brown) - Optional">
+        </div>
+
+        <div class="form-group">
+            <textarea id="p-material" rows="3" placeholder="Product Details / Description (Optional)"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Category:</label>
+            <select id="p-category">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="premium">Premium</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px;">
+            <label style="font-size: 15px; font-weight: 700; color: #000; margin-bottom: 10px; display: block;">Shoe Sizes & Fit Options</label>
+            
+            <!-- Option A: Standard Checkboxes -->
+            <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; display: block;">Select Standard Sizes (UK/India):</label>
+            <div class="size-container" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                <label style="font-weight: normal;"><input type="checkbox" name="size" value="6"> 6</label>
+                <label style="font-weight: normal;"><input type="checkbox" name="size" value="7"> 7</label>
+                <label style="font-weight: normal;"><input type="checkbox" name="size" value="8"> 8</label>
+                <label style="font-weight: normal;"><input type="checkbox" name="size" value="9"> 9</label>
+                <label style="font-weight: normal;"><input type="checkbox" name="size" value="10"> 10</label>
+            </div>
+
+            <!-- Option B: Custom Label Detail (UK, US, EUR, CM) -->
+            <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; display: block;">Or Custom Label Size (UK / US / EUR / CM):</label>
+            <input type="text" id="custom-size-input" placeholder="e.g. UK 6 / US 7 / EUR 40 / CM 250">
+        </div>
+
+        <button type="submit" class="save-btn" id="submit-btn-text">Save Product</button>
+    </form>
+</div>
+
+<div class="products-container">
+    <h3>Existing Products</h3>
+    <div id="products-list">
+        <p style="text-align: center; color: #777;">Loading products...</p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "APKA_API_KEY_YAHAN_DALO",
+        authDomain: "empire-steps-admin.firebaseapp.com",
+        projectId: "empire-steps-admin",
+        storageBucket: "empire-steps-admin.appspot.com",
+        messagingSenderId: "144163770097",
+        appId: "APKA_APP_ID_YAHAN_DALO"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const CLOUD_NAME = "da7hgw0js";
+    const UPLOAD_PRESET = "empire_present";
+
+    document.getElementById('p-images').addEventListener('change', function() {
+        let count = this.files.length;
+        document.getElementById('file-count').innerText = count > 0 ? `${count} photos selected.` : '';
+    });
+
+    async function uploadToCloudinary(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", UPLOAD_PRESET);
+
+        try {
+            let response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                method: "POST",
+                body: formData
+            });
+            let data = await response.json();
+            return data.secure_url || "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
+        } catch (error) {
+            console.error("Cloudinary error:", error);
+            return "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
+        }
+    }
+
+    window.loadExistingProducts = async function() {
+        let listContainer = document.getElementById('products-list');
+        listContainer.innerHTML = "<p style='text-align: center; color: #777;'>Loading products...</p>";
+        
+        try {
+            let querySnapshot = await getDocs(collection(db, "products"));
+            listContainer.innerHTML = "";
+            
+            if (querySnapshot.empty) {
+                listContainer.innerHTML = "<p style='text-align: center; color: #777;'>No products found.</p>";
+                return;
+            }
+
+            querySnapshot.forEach((docSnap) => {
+                let p = docSnap.data();
+                let pId = docSnap.id;
+
+                let itemDiv = document.createElement('div');
+                itemDiv.className = 'product-item';
+                itemDiv.innerHTML = `
+                    <div class="product-info">
+                        <img src="${p.image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff'}" alt="Product">
+                        <div>
+                            <strong>${p.name}</strong><br>
+                            <small>₹${p.price} | Category: ${p.category}</small>
+                        </div>
+                    </div>
+                    <div class="action-btns">
+                        <button class="edit-btn" onclick="editProduct('${pId}')">Update</button>
+                        <button class="delete-btn" onclick="deleteProduct('${pId}')">Delete</button>
+                    </div>
+                `;
+                listContainer.appendChild(itemDiv);
+            });
+        } catch (e) {
+            console.error("Error loading products:", e);
+        }
+    }
+
+    window.saveProductToFirebase = async function(event) {
+        event.preventDefault();
+        
+        let saveBtn = document.getElementById('submit-btn-text');
+        let editId = document.getElementById('edit-product-id').value;
+        saveBtn.innerText = "Uploading Photos & Saving...";
+
+        let name = document.getElementById('p-name').value;
+        let price = Number(document.getElementById('p-price').value);
+        let discount = document.getElementById('p-discount').value || "";
+        let originalPrice = document.getElementById('p-orig-price').value ? Number(document.getElementById('p-orig-price').value) : "";
+        let colors = document.getElementById('p-colors').value || "";
+        let material = document.getElementById('p-material').value || "";
+        let category = document.getElementById('p-category').value;
+
+        // Checkboxes se standard sizes lena
+        let selectedSizes = [];
+        document.querySelectorAll('input[name="size"]:checked').forEach((checkbox) => {
+            selectedSizes.push(checkbox.value);
+        });
+
+        // Custom Size Input (UK/US/EUR/CM) lena
+        let customSize = document.getElementById('custom-size-input').value.trim();
+        if (customSize) {
+            selectedSizes.push(customSize);
+        }
+
+        if (selectedSizes.length === 0) {
+            selectedSizes.push("Standard");
+        }
+
+        let fileInput = document.getElementById('p-images');
+        let imageUrls = [];
+
+        if(fileInput.files.length > 0) {
+            for(let i=0; i<fileInput.files.length; i++) {
+                let liveUrl = await uploadToCloudinary(fileInput.files[i]);
+                imageUrls.push(liveUrl);
+            }
+        }
+
+        try {
+            if (editId) {
+                let updateData = {
+                    name: name,
+                    price: price,
+                    discount: discount,
+                    originalPrice: originalPrice,
+                    colors: colors,
+                    material: material,
+                    category: category,
+                    sizes: selectedSizes
+                };
+                if(imageUrls.length > 0) {
+                    updateData.image = imageUrls[0];
+                    updateData.allImages = imageUrls;
+                }
+                await updateDoc(doc(db, "products", editId), updateData);
+                alert("Product successfully update ho gaya hai!");
+                document.getElementById('edit-product-id').value = "";
+                document.getElementById('form-title').innerText = "Add New Product";
+            } else {
+                let mainImg = imageUrls.length > 0 ? imageUrls[0] : "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
+                let allImgs = imageUrls.length > 0 ? imageUrls : [mainImg];
+
+                await addDoc(collection(db, "products"), {
+                    name: name,
+                    price: price,
+                    discount: discount,
+                    originalPrice: originalPrice,
+                    colors: colors,
+                    material: material,
+                    category: category,
+                    sizes: selectedSizes,
+                    image: mainImg,
+                    allImages: allImgs,
+                    createdAt: new Date()
+                });
+                alert("Product successfully save ho gaya hai!");
+            }
+
+            document.getElementById('product-form').reset();
+            document.getElementById('file-count').innerText = "";
+            document.getElementById('custom-size-input').value = "";
+            loadExistingProducts();
+        } catch (e) {
+            console.error("Error saving product: ", e);
+            alert("Kuch error aa gaya.");
+        }
+        saveBtn.innerText = "Save Product";
+    }
+
+    window.deleteProduct = async function(id) {
+        if(confirm("Kya aap is product ko delete karna chahte hain?")) {
+            try {
+                await deleteDoc(doc(db, "products", id));
+                alert("Product delete ho gaya!");
+                loadExistingProducts();
+            } catch (e) {
+                console.error("Error deleting:", e);
+            }
+        }
+    }
+
+    window.editProduct = async function(id) {
+        try {
+            let docRef = doc(db, "products", id);
+            let docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                let p = docSnap.data();
+                document.getElementById('edit-product-id').value = id;
+                document.getElementById('p-name').value = p.name;
+                document.getElementById('p-price').value = p.price;
+                document.getElementById('p-discount').value = p.discount || "";
+                document.getElementById('p-orig-price').value = p.originalPrice || "";
+                document.getElementById('p-colors').value = p.colors || "";
+                document.getElementById('p-material').value = p.material || "";
+                document.getElementById('p-category').value = p.category || "male";
+
+                let checkboxes = document.querySelectorAll('input[name="size"]');
+                let customInput = document.getElementById('custom-size-input');
+                customInput.value = "";
+
+                if(p.sizes) {
+                    let customSizesList = [];
+                    p.sizes.forEach(sz => {
+                        let matched = false;
+                        checkboxes.forEach(cb => {
+                            if(cb.value === sz) {
+                                cb.checked = true;
+                                matched = true;
+                            }
+                        });
+                        if(!matched) {
+                            customSizesList.push(sz);
+                        }
+                    });
+                    if(customSizesList.length > 0) {
+                        customInput.value = customSizesList.join(", ");
+                    }
+                }
+
+                document.getElementById('form-title').innerText = "Update Product";
+                document.getElementById('submit-btn-text').innerText = "Update Product";
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            }
+        } catch (e) {
+            console.error("Error fetching product for edit:", e);
+        }
+    }
+
+    loadExistingProducts();
+</script>
+
+</body>
+</html>
